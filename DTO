@@ -1,0 +1,80 @@
+package com.example.airflow.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
+import lombok.Data;
+import lombok.extern.jackson.Jacksonized;
+
+import java.util.Map;
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class DagInfo {
+    @JsonProperty("dag_id")
+    private String dagId;
+    
+    @JsonProperty("is_paused")
+    private boolean isPaused;
+    
+    @JsonProperty("description")
+    private String description;
+    
+    @JsonProperty("file_token")
+    private String fileToken;
+}
+
+@Data
+@Builder
+@Jacksonized
+public class TriggerDagRequest {
+    @JsonProperty("logical_date")
+    private String logicalDate; // Optional: If specific execution date needed
+    
+    @JsonProperty("conf")
+    private Map<String, Object> conf; // Runtime configuration parameters
+}
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class DagRunResponse {
+    @JsonProperty("dag_id")
+    private String dagId;
+    
+    @JsonProperty("dag_run_id")
+    private String dagRunId;
+    
+    @JsonProperty("logical_date")
+    private String logicalDate;
+    
+    @JsonProperty("state")
+    private String state;
+}
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class XComEntry {
+    @JsonProperty("key")
+    private String key;
+    
+    @JsonProperty("value")
+    private String value;
+    
+    @JsonProperty("timestamp")
+    private String timestamp;
+}
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class HealthStatus {
+    @JsonProperty("metadatabase")
+    private ComponentStatus metadatabase;
+    
+    @JsonProperty("scheduler")
+    private ComponentStatus scheduler;
+    
+    @Data
+    public static class ComponentStatus {
+        private String status;
+    }
+}
