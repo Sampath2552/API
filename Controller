@@ -1,0 +1,49 @@
+package com.example.airflow.controller;
+
+import com.example.airflow.model.*;
+import com.example.airflow.service.AirflowService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/airflow")
+@RequiredArgsConstructor
+public class AirflowController {
+
+    private final AirflowService airflowService;
+
+    // 1. Health Check
+    @GetMapping("/health")
+    public ResponseEntity<HealthStatus> checkHealth() {
+        return ResponseEntity.ok(airflowService.getHealth());
+    }
+
+    // 2. Get DAG Info
+    @GetMapping("/dags/{dagId}")
+    public ResponseEntity<DagInfo> getDagInfo(@PathVariable String dagId) {
+        return ResponseEntity.ok(airflowService.getDagInfo(dagId));
+    }
+
+    // 3. Trigger DAG
+    @PostMapping("/dags/{dagId}/trigger")
+    public ResponseEntity<DagRunResponse> triggerDag(
+            @PathVariable String dagId, 
+            @RequestBody(required = false) Map<String, Object> configuration) {
+        
+        return ResponseEntity.ok(airflowService.triggerDag(dagId, configuration));
+    }
+
+    // 4. Get XCom Data
+    @GetMapping("/dags/{dagId}/runs/{dagRunId}/tasks/{taskId}/xcom/{key}")
+    public ResponseEntity<XComEntry> getXCom(
+            @PathVariable String dagId,
+            @PathVariable String dagRunId,
+            @PathVariable String taskId,
+            @PathVariable String key) {
+        
+        return ResponseEntity.ok(airflowService.getXComEntry(dagId, dagRunId, taskId, key));
+    }
+}
