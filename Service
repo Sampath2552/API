@@ -1,0 +1,85 @@
+package com.example.airflow.service;
+
+import com.example.airflow.model.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
+
+@Service
+public class AirflowService {
+
+    private final RestClient restClient;
+
+    public AirflowService(@Value("${airflow.api.base-url}") String baseUrl,
+                          @Value("${airflow.api.username}") String username,
+                          @Value("${airflow.api.password}") String password) {
+        
+        // Encode Basic Auth credentials
+        String authHeader = "Basic " + Base64.getEncoder()
+                .encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .defaultHeader("Authorization", authHeader)
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
+
+    /**
+     * Get basic information about a specific DAG
+     */
+    public DagInfo getDagInfo(String dagId) {
+        return restClient.get()
+                .uri("/dags/{dagId}", dagId)
+                .retrieve()
+                .body(DagInfo.class);
+    }
+
+    /**
+     * Trigger a DAG Run
+     */
+    public DagRunResponse triggerDag(String dagId, Map<String, Object> conf) {
+        TriggerDagRequest request = TriggerDagRequest.builder()
+                .conf(conf)
+                .build();
+
+        return restClient.post()
+                .uri("/dags/{dagId}/dagRuns", dagId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .body(DagRunResponse.class);
+    }
+
+    /**
+     * Get XCom Entry
+     * Note: In Airflow API, XComs are often retrieved via specific endpoints.
+     */
+    public XComEntry getXComEntry(String dagId, String dagRunId, String taskId, String key) {
+        return restClient.get()
+                .uri("/dags/{dagId}/dagRuns/{dagRunId}/taskInstances/{taskId}/xcomEntries/{key}", 
+                     dagId, dagRunId, taskId, key)
+                .retrieve()
+                .body(XComEntry.class);
+    }
+
+    /**
+     * Check Airflow Instance Health
+     * Uses the /health endpoint commonly available
+     */
+    public HealthStatus getHealth() {
+        // The health endpoint is often at the root /health, not always under /api/v2
+        // We override the base URL for this specific call if needed, 
+        // but often it is mapped to /api/v2/health in newer versions.
+        // If your Airflow exposes health at root, change uri to absolute path.
+        return restClient.get()
+                .uri("/health") 
+                .retrieve()
+                .body(HealthStatus.class);
+    }
+}
